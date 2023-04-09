@@ -5,41 +5,45 @@ using UnityEngine.InputSystem.Controls;
 
 public class PlayerController : MonoBehaviour
 {
-    public float speed;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float jumpForce = 100f;
+
+    public ForceMode forceMode = ForceMode.Impulse;
     
-    private CharacterController controller;
-    private void Awake()
+    private Rigidbody rb;
+    private Vector2 moveDirection;
+    private bool isGrounded;
+
+    private void Start()
     {
-        controller = GetComponent<CharacterController>();
+        rb = GetComponent<Rigidbody>();
     }
 
-    // Start is called before the first frame update
-    void Start()
+    private void OnMove(InputValue value)
     {
+        moveDirection = value.Get<Vector2>();
     }
 
-    void OnMove(InputValue movementValue)
+    private void OnJump(InputValue value)
     {
-        Vector2 movementVector = movementValue.Get<Vector2>().normalized;
-        float targetAngle = Mathf.Atan2(movementVector.x, movementVector.y) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, targetAngle, 0);
-        controller.Move(movementVector * speed * Time.deltaTime);
-        Debug.Log("Moved with vector: " + movementVector + " and speed: " + speed);
+        if (isGrounded)
+        {
+            rb.AddForce(Vector3.up * jumpForce, forceMode);
+            isGrounded = false;
+        }
     }
 
-    void OnJump()
+    private void FixedUpdate()
     {
-
+        Vector3 movement = new Vector3(moveDirection.x, 0f, moveDirection.y);
+        rb.velocity = movement * moveSpeed;
     }
 
-    void OnLook(InputValue rotationValue)
+    private void OnCollisionEnter(Collision other)
     {
-        Vector2 rotationVector = rotationValue.Get<Vector2>().normalized;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        if (other.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = true;
+        }
     }
 }
